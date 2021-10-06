@@ -61,6 +61,14 @@ func (f *Flock) Path() string {
 	return f.path
 }
 
+// Handle returns the underlying filehandle if present. Try not to use this unless
+// necessary (e.g. annoying windows locking semantics)
+func (f *Flock) Handle() *os.File {
+	f.m.RLock()
+	defer f.m.RUnlock()
+	return f.fh
+}
+
 // Locked returns the lock state (locked: true, unlocked: false).
 //
 // Warning: by the time you use the returned value, the state may have changed.
