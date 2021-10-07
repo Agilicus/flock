@@ -184,7 +184,7 @@ func (f *Flock) reopenFDOnError(err error) (bool, error) {
 			f.fh = nil
 
 			// reopen in read-write mode and set the filehandle
-			fh, err := os.OpenFile(f.path, os.O_CREATE|os.O_RDWR, os.FileMode(0600))
+			fh, err := os.OpenFile(f.path, os.O_CREATE|os.O_RDWR, os.FileMode(f.getPermissions()))
 			if err != nil {
 				return false, err
 			}

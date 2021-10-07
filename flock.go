@@ -32,6 +32,11 @@ type Flock struct {
 	fh   *os.File
 	l    bool
 	r    bool
+
+	// Flags is the flags to open the file with by default
+	Flags int
+	// Permissions is the os permissions to set
+	Permissions int
 }
 
 // New returns a new instance of *Flock. The only parameter
@@ -126,14 +131,18 @@ func (f *Flock) setFh() error {
 	// open a new os.File instance
 	// create it if it doesn't exist, and open the file read-only.
 	flags := os.O_CREATE
-	if runtime.GOOS == "aix" {
-		// AIX cannot preform write-lock (ie exclusive) on a
-		// read-only file.
-		flags |= os.O_RDWR
+	if f.Flags != 0 {
+		flags |= f.Flags
 	} else {
-		flags |= os.O_RDONLY
+		if runtime.GOOS == "aix" {
+			// AIX cannot preform write-lock (ie exclusive) on a
+			// read-only file.
+			flags |= os.O_RDWR
+		} else {
+			flags |= os.O_RDONLY
+		}
 	}
-	fh, err := os.OpenFile(f.path, flags, os.FileMode(0600))
+	fh, err := os.OpenFile(f.path, flags, os.FileMode(f.getPermissions()))
 	if err != nil {
 		return err
 	}
@@ -149,4 +158,12 @@ func (f *Flock) ensureFhState() {
 		f.fh.Close()
 		f.fh = nil
 	}
+}
+
+func (f *Flock) getPermissions() int {
+	if f.Permissions == 0 {
+		return 0600
+	}
+
+	return f.Permissions
 }
